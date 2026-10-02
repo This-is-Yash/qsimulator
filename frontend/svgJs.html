@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Nested SVG</title>
+    <style>
+        
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        div{
+            width: 40;
+            height: 40;
+        }
+
+        .geom{
+    stroke-width: 2px;
+    stroke: red;
+    position: fixed;
+    fill: red;
+  }
+
+  .geomm{
+    stroke-width: 2px;
+    stroke: black;
+    position: fixed;
+    fill: black;
+  }
+
+  .input_gate_connector{
+  	stroke-width: 1px;
+    stroke: black;
+    position: fixed;
+    fill:  #f9e79f ;
+    
+  }
+
+  .output_gate_connector{
+  	stroke-width: 1px;
+    stroke: black;
+    position: fixed;
+    fill:  #d5f5e3 ;
+    
+  }
+
+  .connection{
+    stroke-width: 2px;
+    stroke: red;
+    position: fixed;
+  }
+
+#initial{
+    top: 200px;
+  }
+
+  #coord{
+    top: 250px;
+  }
+  
+  #connectionSVG{
+  	width: 500px;
+  	height: 500px;
+  }
+    </style>
+</head>
+
+<body>
+<div id="drawing"></div>
+<div id="initial">Coordinates</div>
+<div id="coord">Coordinates</div>
+
+
+<script src = 'js/jquery.js'> </script>
+<script src = 'js/jquery-ui.js'> </script>
+<script src='js/helper.js'></script>
+<script src='js/svg.min.js'></script>
+<script src='js/svg/jquery.svg.min.js'></script>
+<script src="jsonschemas/gatesUI.json"></script>
+<script src="js/cons.js"></script>
+<!--<script src="js/connections2.js"></script> -->
+
+<script>
+	var newId=0;
+//$(function(){$('#layout').svg({});
+
+  //      var svg = $('#X').svg('get');
+    //    alert(svg);
+
+	var jsonData = JSON.parse(data);
+	var numOfRows=jsonData.length;
+
+  //var allConnectors = SVG("allconnectors").size(500, 500);
+//var draw = SVG("allconnectors").addTo('body').size(500, 500);
+	for(var i=0; i<parseInt(numOfRows); i++){
+		var gateName=jsonData[i]["name"];
+		$("<div/>").appendTo("body")
+			   .attr("id",gateName);
+		var num_bits=jsonData[i]["num_bits"];
+		//alert("Num of bits : "+num_bits);
+
+	var draw = SVG(gateName).size(45, 45);
+	draw.attr("class","cloneAble")
+		.attr("svg",1)
+		.attr("id",gateName);
+	var rect = draw.image("images/"+gateName+".png")
+             .attr("onmousedown","enabledrag(evt)")
+					   .move(5,0);
+	rect.attr("class","gateimage");
+	var ystart=2;
+	for(var bitnum=0;bitnum<num_bits;bitnum++){
+		yval=ystart+10*bitnum;
+		draw.rect(5,5).move(0, yval)
+					  .attr("class","input_gate_connector connector")
+					  .attr("onmousedown","test(evt)");
+		draw.rect(5,5).move(40, yval)
+					  .attr("class","output_gate_connector connector")
+					  .attr("onmousedown","test(evt)");
+		
+	}
+
+	}
+
+	//$('#layout').svg({});
+
+        //var svg = $('#X').svg('get');
+        //alert(svg);
+	Attach();
+   
+
+
+
+</script>
+<script>
+    //Attach();
+</script>
+<svg id="connectionSVG"><line id="connection" class="connection"/></svg>
+
+</body>

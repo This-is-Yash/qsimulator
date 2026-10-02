@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Nested SVG</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .geom{
+    stroke-width: 2px;
+    stroke: red;
+    position: fixed;
+    fill: white;
+  }
+
+  .geomm{
+    stroke-width: 2px;
+    stroke: black;
+    position: fixed;
+    fill: black;
+  }
+    </style>
+</head>
+
+<body>
+
+        <svg id="gate" svg="1" width="60" height="60" class="cloneAble" >
+            <image href="images/H.png" height="80%" width="80%" id="hadamard"/>
+            <rect x="40" y="5" id="rect1" class="geomm" width="16%" height="16%"/>
+            <rect x="40" y="25" id="rect2" class="geomm" width="16%" height="16%"/>
+        </svg>
+
+<script src = 'js/jquery.js'> </script>
+<script src = 'js/jquery-ui.js'> </script>
+<script src='js/helper.js'></script>
+
+<script>
+    Attach();
+</script>
+
+</body>

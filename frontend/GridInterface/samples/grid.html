@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BarcQ Grid Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fff;
+      margin: 20px;
+    }
+
+    table {
+      border-collapse: collapse;
+    }
+
+    td {
+      width: 40px;
+      height: 40px;
+      border: 1px solid #ccc;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .dropzone, .nondropzone {
+      width: 35px;
+      height: 35px;
+      margin: auto;
+      border: 1px dashed #007BFF;
+      border-radius: 6px;
+      background: #f9f9f9;
+    }
+
+    .nondropzone {
+      border: 1px solid #bbb;
+      background: #f0f0f0;
+    }
+
+    #mergebutton {
+      margin-top: 10px;
+      padding: 6px 12px;
+      border: none;
+      background: #4CAF50;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #mergebutton:hover {
+      background: #45a049;
+    }
+  </style>
+
+  <script src="../../js/jquery.js"></script>
+  <script src="../../js/jquery-ui.js"></script>
+  <script src="../../js/gridInterface.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      console.log("🧩 Grid initialized...");
+
+      // Use CreateDropZone if available, else fallback
+      if (typeof CreateDropZone === "function") {
+        console.log("✅ Calling CreateDropZone()...");
+        CreateDropZone();
+      } else if (typeof Attach2 === "function") {
+        console.log("⚙️ Fallback: Calling Attach2()...");
+        Attach2();
+      } else {
+        console.warn("⚠️ No grid initialization function found.");
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <h2>BarcQ Grid Prototype</h2>
+
+  <table id="gridTable" border="1">
+    <!-- Generate a 5x5 grid -->
+    <tbody>
+      <!-- Row 0 -->
+      <tr>
+        <td><div id="cell_0_0" class="dropzone" rowId="0" columnId="0"></div></td>
+        <td><div id="cell_0_1" class="dropzone" rowId="0" columnId="1"></div></td>
+        <td><div id="cell_0_2" class="dropzone" rowId="0" columnId="2"></div></td>
+        <td><div id="cell_0_3" class="dropzone" rowId="0" columnId="3"></div></td>
+        <td><div id="cell_0_4" class="dropzone" rowId="0" columnId="4"></div></td>
+      </tr>
+
+      <!-- Row 1 -->
+      <tr>
+        <td><div id="cell_1_0" class="nondropzone" rowId="1" columnId="0"></div></td>
+        <td><div id="cell_1_1" class="nondropzone" rowId="1" columnId="1"></div></td>
+        <td><div id="cell_1_2" class="nondropzone" rowId="1" columnId="2"></div></td>
+        <td><div id="cell_1_3" class="nondropzone" rowId="1" columnId="3"></div></td>
+        <td><div id="cell_1_4" class="nondropzone" rowId="1" columnId="4"></div></td>
+      </tr>
+
+      <!-- Row 2 -->
+      <tr>
+        <td><div id="cell_2_0" class="dropzone" rowId="2" columnId="0"></div></td>
+        <td><div id="cell_2_1" class="dropzone" rowId="2" columnId="1"></div></td>
+        <td><div id="cell_2_2" class="dropzone" rowId="2" columnId="2"></div></td>
+        <td><div id="cell_2_3" class="dropzone" rowId="2" columnId="3"></div></td>
+        <td><div id="cell_2_4" class="dropzone" rowId="2" columnId="4"></div></td>
+      </tr>
+
+      <!-- Row 3 -->
+      <tr>
+        <td><div id="cell_3_0" class="nondropzone" rowId="3" columnId="0"></div></td>
+        <td><div id="cell_3_1" class="nondropzone" rowId="3" columnId="1"></div></td>
+        <td><div id="cell_3_2" class="nondropzone" rowId="3" columnId="2"></div></td>
+        <td><div id="cell_3_3" class="nondropzone" rowId="3" columnId="3"></div></td>
+        <td><div id="cell_3_4" class="nondropzone" rowId="3" columnId="4"></div></td>
+      </tr>
+
+      <!-- Row 4 -->
+      <tr>
+        <td><div id="cell_4_0" class="dropzone" rowId="4" columnId="0"></div></td>
+        <td><div id="cell_4_1" class="dropzone" rowId="4" columnId="1"></div></td>
+        <td><div id="cell_4_2" class="dropzone" rowId="4" columnId="2"></div></td>
+        <td><div id="cell_4_3" class="dropzone" rowId="4" columnId="3"></div></td>
+        <td><div id="cell_4_4" class="dropzone" rowId="4" columnId="4"></div></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <button type="button" id="mergebutton">Merge</button>
+
+  <p id="statusMsg">Grid loaded successfully.</p>
+</body>
+</html>

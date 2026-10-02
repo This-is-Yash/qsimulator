@@ -1,0 +1,36 @@
+Backend File: D:\Quantum\barcQ\backend\cherryPyWork\pythonBackend.py
+
+Backend is running on: http://localhost:8080/
+
+Frontend File: D:\Quantum\barcQ\frontend\GridInterface\samples\gridSkeleton.html
+
+Python Version: 3.10.11
+
+Libraries used:
+1. CherryPy           18.10.0
+2. ipython            8.37.0
+3. qutip              5.2.0
+4. qutip-qip          0.4.1
+
+Here are the steps
+1. Clone the repository
+    git clone http://github.com/rsehgal/barcQ
+
+2. It's always recommended to do python stuff in a virtual environment. So create virtual environment and activate it
+    conda activate base
+    python -m venv QEnv
+    source QEnv/bin/activate - Linux
+    QEnv\bin\activate - Windows
+
+3. Install the required dependencies:
+    pip install simplejson cherrypy qutip qutip_qip ipython
+
+4. cd barcQ/backend/cherryPyWork
+    and start the server
+    python pythonBackend.py
+    By default this will start the server at port 8080
+
+5. Open you browser at
+     http://localhost:8080 
+     Try creating some simple circuit
+

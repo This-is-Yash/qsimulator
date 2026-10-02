@@ -1,0 +1,69 @@
+[16/Dec/2025:01:34:50] ENGINE Listening for SIGTERM.
+[16/Dec/2025:01:34:50] ENGINE Bus STARTING
+[16/Dec/2025:01:34:50] ENGINE Started monitor thread 'Autoreloader'.
+[16/Dec/2025:01:34:50] ENGINE Serving on http://127.0.0.1:8080
+[16/Dec/2025:01:34:50] ENGINE Bus STARTED
+[16/Dec/2025:22:47:38] ENGINE Listening for SIGTERM.
+[16/Dec/2025:22:47:38] ENGINE Bus STARTING
+[16/Dec/2025:22:47:38] ENGINE Started monitor thread 'Autoreloader'.
+[16/Dec/2025:22:47:39] ENGINE Serving on http://127.0.0.1:8080
+[16/Dec/2025:22:47:39] ENGINE Bus STARTED
+[17/Dec/2025:01:40:52] ENGINE Listening for SIGTERM.
+[17/Dec/2025:01:40:52] ENGINE Bus STARTING
+[17/Dec/2025:01:40:52] ENGINE Started monitor thread 'Autoreloader'.
+[17/Dec/2025:01:40:53] ENGINE Serving on http://127.0.0.1:8080
+[17/Dec/2025:01:40:53] ENGINE Bus STARTED
+[17/Dec/2025:01:42:40] ENGINE Keyboard Interrupt: shutting down bus
+[17/Dec/2025:01:42:40] ENGINE Bus STOPPING
+[17/Dec/2025:01:42:41] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('127.0.0.1', 8080)) shut down
+[17/Dec/2025:01:42:41] ENGINE Stopped thread 'Autoreloader'.
+[17/Dec/2025:01:42:41] ENGINE Bus STOPPED
+[17/Dec/2025:01:42:41] ENGINE Bus EXITING
+[17/Dec/2025:01:42:41] ENGINE Bus EXITED
+[17/Dec/2025:01:42:41] ENGINE Waiting for child threads to terminate...
+[17/Dec/2025:12:21:30] ENGINE Listening for SIGTERM.
+[17/Dec/2025:12:21:30] ENGINE Bus STARTING
+[17/Dec/2025:12:21:30] ENGINE Started monitor thread 'Autoreloader'.
+[17/Dec/2025:12:21:30] ENGINE Serving on http://127.0.0.1:8080
+[17/Dec/2025:12:21:30] ENGINE Bus STARTED
+[17/Dec/2025:12:22:15] ENGINE Keyboard Interrupt: shutting down bus
+[17/Dec/2025:12:22:15] ENGINE Bus STOPPING
+[17/Dec/2025:12:22:15] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('127.0.0.1', 8080)) shut down
+[17/Dec/2025:12:22:15] ENGINE Stopped thread 'Autoreloader'.
+[17/Dec/2025:12:22:15] ENGINE Bus STOPPED
+[17/Dec/2025:12:22:15] ENGINE Bus EXITING
+[17/Dec/2025:12:22:15] ENGINE Bus EXITED
+[17/Dec/2025:12:22:15] ENGINE Waiting for child threads to terminate...
+[17/Dec/2025:12:40:05] ENGINE Listening for SIGTERM.
+[17/Dec/2025:12:40:05] ENGINE Bus STARTING
+[17/Dec/2025:12:40:05] ENGINE Started monitor thread 'Autoreloader'.
+[17/Dec/2025:12:40:05] ENGINE Serving on http://127.0.0.1:8080
+[17/Dec/2025:12:40:05] ENGINE Bus STARTED
+[17/Dec/2025:12:43:57] ENGINE Restarting because C:\Users\ADMIN\Desktop\Quantum_Algorithm\Quantum_Simulator-main\backend\cherryPyWork\pythonBackend.py changed.
+[17/Dec/2025:12:43:57] ENGINE Stopped thread 'Autoreloader'.
+[17/Dec/2025:12:43:57] ENGINE Bus STOPPING
+[17/Dec/2025:12:43:57] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('127.0.0.1', 8080)) shut down
+[17/Dec/2025:12:43:57] ENGINE Bus STOPPED
+[17/Dec/2025:12:43:57] ENGINE Bus EXITING
+[17/Dec/2025:12:43:57] ENGINE Bus EXITED
+[17/Dec/2025:12:43:57] ENGINE Waiting for child threads to terminate...
+[17/Dec/2025:12:43:57] ENGINE Re-spawning C:\Users\ADMIN\QEnv\Scripts\python.exe C:\Users\ADMIN\Desktop\Quantum_Algorithm\Quantum_Simulator-main\backend\cherryPyWork\pythonBackend.py
+[17/Dec/2025:12:45:08] ENGINE Listening for SIGTERM.
+[17/Dec/2025:12:45:08] ENGINE Bus STARTING
+[17/Dec/2025:12:45:08] ENGINE Started monitor thread 'Autoreloader'.
+[17/Dec/2025:12:45:08] ENGINE Serving on http://127.0.0.1:8080
+[17/Dec/2025:12:45:08] ENGINE Bus STARTED
+[17/Dec/2025:12:52:58] ENGINE Listening for SIGTERM.
+[17/Dec/2025:12:52:58] ENGINE Bus STARTING
+[17/Dec/2025:12:52:58] ENGINE Started monitor thread 'Autoreloader'.
+[17/Dec/2025:12:52:58] ENGINE Serving on http://127.0.0.1:8080
+[17/Dec/2025:12:52:58] ENGINE Bus STARTED
+[17/Dec/2025:12:53:23] ENGINE Restarting because C:\Users\ADMIN\Desktop\Quantum_Algorithm\Quantum_Simulator-main\backend\cherryPyWork\pythonBackend.py changed.
+[17/Dec/2025:12:53:23] ENGINE Stopped thread 'Autoreloader'.
+[17/Dec/2025:12:53:23] ENGINE Bus STOPPING
+[17/Dec/2025:12:53:23] ENGINE HTTP Server cherrypy._cpwsgi_server.CPWSGIServer(('127.0.0.1', 8080)) shut down
+[17/Dec/2025:12:53:23] ENGINE Bus STOPPED
+[17/Dec/2025:12:53:23] ENGINE Bus EXITING
+[17/Dec/2025:12:53:23] ENGINE Bus EXITED
+[17/Dec/2025:12:53:23] ENGINE Waiting for child threads to terminate...
+[17/Dec/2025:12:53:23] ENGINE Re-spawning C:\Users\ADMIN\QEnv\Scripts\python.exe C:\Users\ADMIN\Desktop\Quantum_Algorithm\Quantum_Simulator-main\backend\cherryPyWork\pythonBackend.py

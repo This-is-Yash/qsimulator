@@ -1,0 +1,1766 @@
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <style>
+/* ========================================
+   CONTROLLED GATE POPUP STYLING
+   ======================================== */
+.hover_bkgr_fricc {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+
+.hover_bkgr_fricc > div {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  position: relative;
+  min-width: 400px;
+  max-width: 500px;
+}
+
+.popupCloseButton {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  cursor: pointer;
+  color: #999;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  line-height: 28px;
+}
+
+.popupCloseButton:hover {
+  color: #333;
+}
+
+.popupSetButton {
+  background: #4CAF50;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 15px;
+  font-size: 16px;
+  border: none;
+  width: 100%;
+  font-weight: bold;
+}
+
+.popupSetButton:hover {
+  background: #45a049;
+}
+
+#gatePopup label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+  color: #333;
+  font-size: 14px;
+}
+
+#gatePopup input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+#gatePopup input[type="text"]:focus {
+  border-color: #4CAF50;
+  outline: none;
+}
+
+#gatePopup h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 22px;
+  text-align: center;
+}
+
+.popup-help-text {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+  font-weight: normal;
+}
+</style>
+  <meta charset="UTF-8">
+  <title>BarcQ Unified Quantum Simulator</title>
+
+  <link rel="stylesheet" href="/css/tabstyle.css">
+  <link rel="stylesheet" href="/css/grid.css">
+  <link rel="stylesheet" href="/css/popup.css">
+
+  <script src="/jsonschemas/allowedUserDefinedGate.json"></script>
+  <script src="/jsonschemas/gatesUIExtended.json"></script>
+  <script src="/js/jquery.js"></script>
+  <script src="/js/jquery-ui.js"></script>
+  <script src="/js/createdropzone.js"></script>
+  <script src="/js/globalvars.js"></script>
+  <script src="/js/toolbox_v2.js"></script>
+  <script src="/js/selectanddelete.js"></script>
+  <script src="/js/cloneanddrag_v2.js"></script>
+  <script src="/js/mergeandunmerge.js"></script>
+  <script src="/js/gridtojson.js"></script>
+  <script src="/js/core.js"></script>
+  <script src="/js/loadjson.js"></script>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script src="/js/gridinputlines.js"></script>
+  <script src="/js/redesigngrid.js"></script>
+  <script src="/js/gatessymbol.js"></script>
+  <script src="/js/userdefinedcontrolgates.js"></script>
+  <script src="/js/checkdiv.js"></script>
+  <script src="/js/tabbedInterface.js"></script>
+  <script src="/js/plotly-latest.min.js"></script>
+  
+  <script src="/js/qsvm_frontend.js?v=20251219"></script>
+  <script src="/js/qpca_frontend.js?v=20251229"></script>
+
+  <script>
+  // ========================================
+// COMPLETE FIX FOR CIRCUIT SIMULATION
+// Add this to gridSkeleton.html <script> section
+// ========================================
+
+$(document).ready(function() {
+  console.log("⚡ Initializing BarcQ Unified Interface...");
+
+  // Grid setup
+  CreateToolBox();
+  CreateDropzone();
+  AttachDraggableEvents();
+  AttachDroppableEvents();
+  
+  if (typeof CoreTest === 'function') {
+    console.log("************* Executing Core Test *************");
+    CoreTest();
+    console.log("***********************************************");
+  }
+  
+  AddInputLinesToGrid();
+  InsertConnectorOnGrid();
+  ControlGateInitialization();
+
+  // ========================================
+  // CONTROLLED GATE POPUP (Working)
+  // ========================================
+  $("#create").off("click").on("click", function() {
+    console.log("🎛️ New Controlled Gate clicked");
+    $("#ctl_bits_field").val("");
+    $("#tgt_bits_field").val("");
+    $("#gatePopup").css("display", "flex").show();
+  });
+
+  $(".popupCloseButton").off("click").on("click", function() {
+    console.log("❌ Closing popup");
+    $("#gatePopup").hide();
+  });
+
+  $("#gateSetButton").off("click").on("click", function() {
+    console.log("✅ Gate Set button clicked");
+    
+    const ctlBitsStr = $("#ctl_bits_field").val().trim();
+    const tgtBitsStr = $("#tgt_bits_field").val().trim();
+    
+    if (!ctlBitsStr && !tgtBitsStr) {
+      alert("⚠️ Please enter at least control bits or target bits!");
+      return;
+    }
+    
+    const ctl_bits_array = ctlBitsStr ? 
+      ctlBitsStr.split(/[,\s]+/).map(s => s.trim()).filter(s => s && !isNaN(s)).map(s => parseInt(s)) : [];
+    const tgt_bits_array = tgtBitsStr ? 
+      tgtBitsStr.split(/[,\s]+/).map(s => s.trim()).filter(s => s && !isNaN(s)).map(s => parseInt(s)) : [];
+    
+    if (ctl_bits_array.length === 0 && tgt_bits_array.length === 0) {
+      alert("⚠️ Please enter valid qubit numbers (e.g., 0,1,2)");
+      return;
+    }
+    
+    const ctlSet = new Set(ctl_bits_array);
+    const tgtSet = new Set(tgt_bits_array);
+    const intersection = [...ctlSet].filter(x => tgtSet.has(x));
+    
+    if (intersection.length > 0) {
+      alert("❌ Error: Control and target bits cannot overlap!\nOverlapping bits: " + intersection.join(", "));
+      return;
+    }
+    
+    window.unitaryControlRowIds = ctl_bits_array;
+    window.unitaryTargetRowIds = tgt_bits_array;
+    
+    $("#gatePopup").hide();
+    
+    if (typeof UpdateGenericControlGate === 'function') {
+      try {
+        UpdateGenericControlGate();
+      } catch (e) {
+        console.warn("⚠️ UpdateGenericControlGate error:", e);
+      }
+    }
+    
+    alert(`✅ Controlled gate configured!\n\nControl: ${ctl_bits_array.join(", ") || "None"}\nTarget: ${tgt_bits_array.join(", ") || "None"}\n\nDrag a gate from the toolbox to apply.`);
+    
+    $("#ctl_bits_field").val("");
+    $("#tgt_bits_field").val("");
+  });
+
+  // ========================================
+  // CIRCUIT SIMULATION - FIXED VERSION
+  // ========================================
+  $("#submitButton").off("click").on("click", function(e){
+    e.preventDefault();
+    console.log("🔄 Running circuit simulation...");
+    
+    // Generate JSON from grid
+    if (typeof GridToJson === 'function') {
+      GridToJson();
+    } else {
+      console.error("❌ GridToJson function not found!");
+      alert("❌ Circuit generation function not available. Please refresh the page.");
+      return;
+    }
+    
+    // Check if circuitJsonObj exists and has instructions
+    if (typeof circuitJsonObj === 'undefined') {
+      console.error("❌ circuitJsonObj is undefined!");
+      alert("❌ Circuit data not generated. Please try adding gates to the grid first.");
+      return;
+    }
+    
+    if (!circuitJsonObj.instructions || circuitJsonObj.instructions.length === 0) {
+      alert("⚠️ Please add gates to the circuit before running simulation.\n\nSteps:\n1. Drag gates from the left toolbox\n2. Drop them on the grid\n3. Click 'Run Simulation'");
+      console.warn("⚠️ Empty circuit - no gates placed");
+      return;
+    }
+    
+    console.log("📦 Circuit has " + circuitJsonObj.instructions.length + " gates");
+    console.log("📦 Sending circuit:", JSON.stringify(circuitJsonObj, null, 2));
+
+    // Show loading state IMMEDIATELY
+    $(".tabcontent").hide();
+    $("#results").show();
+    $(".tablinks").removeClass("active");
+    $('button[onclick*="results"]').addClass("active");
+    
+    $("#plotHist").html(`
+      <div style="text-align:center; padding:60px;">
+        <div style="width:60px; height:60px; border:6px solid #f3f3f3; 
+                    border-top:6px solid #667eea; border-radius:50%; 
+                    margin:0 auto 20px; animation:spin 1s linear infinite;"></div>
+        <h3 style="color:#667eea;">⚙️ Simulating Quantum Circuit...</h3>
+        <p style="color:#666;">Computing quantum state evolution</p>
+        <style>
+          @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+          }
+        </style>
+      </div>
+    `);
+
+    // Send to backend
+    $.ajax({
+      type: "POST",
+      url: "/CodeGenerator",
+      data: JSON.stringify(circuitJsonObj),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      timeout: 30000, // 30 second timeout
+      
+      success: function(data) {
+        console.log("✅ Backend response received");
+        console.log("Response type:", typeof data);
+        console.log("Response:", data);
+        
+        let res;
+        try {
+          res = typeof data === "string" ? JSON.parse(data) : data;
+        } catch (parseError) {
+          console.error("❌ Failed to parse response:", parseError);
+          $("#plotHist").html(`
+            <div style="padding:40px; text-align:center;">
+              <h3 style="color:#f44336;">❌ Response Parse Error</h3>
+              <p>Could not parse server response</p>
+              <pre style="text-align:left; background:#f5f5f5; padding:15px; 
+                          border-radius:8px; overflow:auto; max-height:300px;">
+${data}
+              </pre>
+            </div>
+          `);
+          return;
+        }
+        
+        // Check for errors
+        if (res.error) {
+          console.error("❌ Simulation error:", res.error);
+          $("#plotHist").html(`
+            <div style="padding:40px; text-align:center;">
+              <h3 style="color:#f44336;">❌ Simulation Error</h3>
+              <p style="color:#666; font-size:16px;">${res.error}</p>
+              <p style="color:#999; font-size:14px; margin-top:20px;">
+                This usually means there's an issue with the circuit configuration.
+                Try clearing the grid and building a simpler circuit first.
+              </p>
+            </div>
+          `);
+          return;
+        }
+
+        // Validate response has required data
+        if (!res.xdata || !res.ydata) {
+          console.error("❌ Response missing xdata or ydata:", res);
+          $("#plotHist").html(`
+            <div style="padding:40px; text-align:center;">
+              <h3 style="color:#f44336;">❌ Invalid Response</h3>
+              <p>Server response is missing required data</p>
+              <pre style="text-align:left; background:#f5f5f5; padding:15px; 
+                          border-radius:8px; overflow:auto; max-height:300px;">
+${JSON.stringify(res, null, 2)}
+              </pre>
+            </div>
+          `);
+          return;
+        }
+
+        console.log("✅ Valid response with xdata:", res.xdata.length, "points");
+        console.log("✅ Valid response with ydata:", res.ydata.length, "values");
+
+        // Hide algorithm outputs
+        $("#qsvmOutput").hide();
+        $("#qpcaOutput").hide();
+
+        // Clear and plot results
+        $("#plotHist").empty();
+        
+        try {
+          // Ensure xdata is array of strings
+          let xStringData = res.xdata.map(x => String(x));
+          
+          console.log("📊 Plotting histogram with Plotly...");
+          console.log("X data:", xStringData);
+          console.log("Y data:", res.ydata);
+          
+          Plotly.newPlot("plotHist", [{
+            x: xStringData,
+            y: res.ydata,
+            type: "bar",
+            marker: { 
+              color: '#3498db',
+              line: {
+                color: '#2980b9',
+                width: 1.5
+              }
+            }
+          }], {
+            title: {
+              text: "Quantum Circuit Output Probabilities",
+              font: { size: 20, color: '#333' }
+            },
+            xaxis: { 
+              title: "Quantum State |ψ⟩",
+              tickangle: -45,
+              tickfont: { size: 12 }
+            },
+            yaxis: { 
+              title: "Probability", 
+              range: [0, Math.max(...res.ydata) * 1.1],
+              tickformat: '.3f'
+            },
+            plot_bgcolor: '#f9f9f9',
+            paper_bgcolor: 'white',
+            margin: { t: 60, b: 100, l: 60, r: 30 }
+          }, {
+            responsive: true,
+            displayModeBar: true
+          });
+          
+          console.log("✅ Plot rendered successfully!");
+          
+          // Add success message
+          const totalProb = res.ydata.reduce((a, b) => a + b, 0);
+          const maxProb = Math.max(...res.ydata);
+          const maxState = xStringData[res.ydata.indexOf(maxProb)];
+          
+          const infoDiv = $(`
+            <div style="margin-top:20px; padding:20px; background:#e8f5e9; 
+                        border-radius:8px; border:2px solid #4caf50;">
+              <h4 style="color:#2e7d32; margin-top:0;">✅ Simulation Complete</h4>
+              <p style="color:#1b5e20; margin:5px 0;">
+                <strong>Total Probability:</strong> ${totalProb.toFixed(6)}
+                ${Math.abs(totalProb - 1.0) > 0.01 ? " ⚠️ (Should be ~1.0)" : " ✓"}
+              </p>
+              <p style="color:#1b5e20; margin:5px 0;">
+                <strong>Most Likely State:</strong> ${maxState} 
+                (${(maxProb * 100).toFixed(2)}% probability)
+              </p>
+              <p style="color:#1b5e20; margin:5px 0;">
+                <strong>Basis States:</strong> ${res.xdata.length}
+              </p>
+            </div>
+          `);
+          $("#plotHist").append(infoDiv);
+          
+        } catch (plotError) {
+          console.error("❌ Plotting error:", plotError);
+          $("#plotHist").html(`
+            <div style="padding:40px; text-align:center;">
+              <h3 style="color:#f44336;">❌ Plotting Error</h3>
+              <p>${plotError.message}</p>
+              <p style="margin-top:20px;">
+                <strong>X Data:</strong> ${JSON.stringify(res.xdata)}<br>
+                <strong>Y Data:</strong> ${JSON.stringify(res.ydata)}
+              </p>
+            </div>
+          `);
+        }
+
+        // Update QuTiP code tab
+        if (res.qutip) {
+          $("#qutipCode").text(res.qutip);
+          console.log("✅ QuTiP code updated");
+        }
+      },
+      
+      error: function(xhr, status, err) {
+        console.error("❌ AJAX Error:");
+        console.error("  Status:", status);
+        console.error("  Error:", err);
+        console.error("  Response:", xhr.responseText);
+        
+        $("#plotHist").html(`
+          <div style="padding:40px; text-align:center;">
+            <h3 style="color:#f44336;">❌ Connection Error</h3>
+            <p style="color:#666; font-size:16px;">Failed to communicate with backend server</p>
+            
+            <div style="text-align:left; margin:20px auto; max-width:600px; 
+                        background:#f5f5f5; padding:20px; border-radius:8px;">
+              <p><strong>Status:</strong> ${status}</p>
+              <p><strong>Error:</strong> ${err || "Unknown error"}</p>
+              <p><strong>Response:</strong></p>
+              <pre style="max-height:200px; overflow:auto; background:white; 
+                          padding:10px; border-radius:4px;">
+${xhr.responseText || "No response from server"}
+              </pre>
+            </div>
+            
+            <p style="color:#999; margin-top:20px;">
+              Make sure the backend server is running:<br>
+              <code style="background:#333; color:#0f0; padding:5px 10px; 
+                           border-radius:4px; display:inline-block; margin-top:10px;">
+                python pythonBackend.py
+              </code>
+            </p>
+            
+            <button onclick="location.reload()" 
+                    style="margin-top:20px; padding:12px 24px; background:#667eea; 
+                           color:white; border:none; border-radius:6px; cursor:pointer; 
+                           font-size:14px; font-weight:600;">
+              🔄 Reload Page
+            </button>
+          </div>
+        `);
+      }
+    });
+  });
+
+  // ========================================
+  // OTHER BUTTONS
+  // ========================================
+  $("#mergebutton").click(function(){
+    console.log("📤 Export JSON clicked");
+    if (typeof GridToJson === 'function') {
+      GridToJson();
+      console.log("✅ Circuit JSON:", circuitJsonObj);
+      
+      const dataStr = JSON.stringify(circuitJsonObj, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'quantum_circuit_' + new Date().getTime() + '.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert("✅ Circuit exported successfully!");
+    }
+  });
+  
+  $("#loadbutton").click(function(){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const jsonData = JSON.parse(event.target.result);
+          console.log("📋 Loaded JSON:", jsonData);
+          
+          if (typeof LoadJson === 'function') {
+            LoadJson(jsonData);
+            alert(`✅ Circuit loaded with ${jsonData.instructions?.length || 0} gates`);
+          } else {
+            alert("⚠️ Load function not available");
+          }
+        } catch (error) {
+          console.error("❌ Error loading circuit:", error);
+          alert("❌ Error loading circuit: " + error.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+    
+    input.click();
+  });
+  
+  $("#clearButton").click(() => {
+    if (confirm("Are you sure you want to clear the circuit?")) {
+      $("#dropzoneDiv").empty();
+      if (typeof CreateDropzone === "function") CreateDropzone();
+      if (typeof AddInputLinesToGrid === "function") AddInputLinesToGrid();
+      if (typeof InsertConnectorOnGrid === "function") InsertConnectorOnGrid();
+      console.log("🧹 Grid cleared");
+      alert("✅ Circuit cleared");
+    }
+  });
+  
+  $("#addQubitButton").click(() => {
+    if (typeof AddQubitRow === "function") {
+      AddQubitRow();
+      console.log("✅ Qubit added");
+    }
+  });
+  
+  $("#removeQubitButton").click(() => {
+    if (typeof RemoveQubitRow === "function") {
+      RemoveQubitRow();
+      console.log("✅ Qubit removed");
+    }
+  });
+
+  console.log("✅ All event handlers initialized");
+});
+  </script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    h2 {
+      color: white;
+      text-align: center;
+      font-size: 32px;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .tab {
+      background: white;
+      border-radius: 10px 10px 0 0;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .tablinks {
+      background: #f1f3f4;
+      border: none;
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #5f6368;
+    }
+
+    .tablinks:hover {
+      background: #e8eaed;
+      color: #202124;
+    }
+
+    .tablinks.active {
+      background: white;
+      color: #667eea;
+      border-bottom: 3px solid #667eea;
+    }
+
+    .tabcontent {
+      background: white;
+      padding: 30px;
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      min-height: 500px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 5px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .monospace {
+      font-family: 'Courier New', monospace;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    #plotHist {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .qsvm-plot-container {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      overflow: visible !important;
+    }
+
+    .qsvm-plot-container > div {
+      width: 100% !important;
+      min-height: 500px;
+      overflow: visible !important;
+    }
+
+    .plotly {
+      overflow: visible !important;
+    }
+
+    .js-plotly-plot {
+      overflow: visible !important;
+    }
+
+    .plotly .gl-container {
+      overflow: visible !important;
+    }
+    
+    .qpca-plot-container {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+  </style>
+</head>
+
+<body>
+  <h2>🌌 BarcQ Unified Quantum Simulator</h2>
+
+  <div class="tab">
+    <button class="tablinks active" onclick="openCity(event, 'circuitComposer')">Circuit Editor</button>
+    <button class="tablinks" onclick="openCity(event, 'qsvmPanel')">QSVM</button>
+    <button class="tablinks" onclick="openCity(event, 'qpcaPanel')">QPCA</button>
+    <button class="tablinks" onclick="openCity(event, 'qutipCode')">QuTiP Code</button>
+    <button class="tablinks" onclick="openCity(event, 'results')">Results</button>
+  </div> 
+
+  <div id="circuitComposer" class="tabcontent" style="display:block;">
+    <table>
+      <tr>
+        <td><div id="toolboxDivSingle" class="toolbox"></div></td>
+        <td><div id="toolboxDivMultiple" class="toolbox"></div></td>
+        <td style="vertical-align: top;">
+          <div id="parentForOverlappingDiv">
+            <div id="linesDiv" class="box"></div>
+            <div id="svgDropDiv" class="box stack-top">
+              <svg xmlns="http://www.w3.org/2000/svg" id="testSvg" width="100%" height="100%">
+                <g id="testGroup">
+                  <foreignObject x="0" y="0" width="100%" height="100%">
+                    <div id="dropzoneDiv" width="100%" height="100%"></div>
+                  </foreignObject>
+                </g>
+              </svg>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <div style="margin-top:20px; text-align:center;">
+      <button id="submitButton">▶️ Run Simulation</button>
+      <button id="mergebutton">📤 Export JSON</button>
+      <button id="loadbutton">📥 Load Circuit</button>
+      <button id="create">➕ New Controlled Gate</button>
+      <button id="clearButton">🗑️ Clear Grid</button>
+      <button id="addQubitButton">⬇️ Add Qubit</button>
+      <button id="removeQubitButton">⬆️ Remove Qubit</button>
+    </div>
+  </div>
+
+  <div class="hover_bkgr_fricc" id="gatePopup">
+    <div>
+      <span class="popupCloseButton">&times;</span>
+      <h3>⚙️ Configure Controlled Gate</h3>
+      
+      <label for="ctl_bits_field">
+        Control Qubits:
+        <span class="popup-help-text">(comma or space separated, e.g., "0,1" or "0 1")</span>
+      </label>
+      <input type="text" id="ctl_bits_field" placeholder="e.g., 0,1,2">
+      
+      <label for="tgt_bits_field">
+        Target Qubits:
+        <span class="popup-help-text">(comma or space separated, e.g., "3,4" or "3 4")</span>
+      </label>
+      <input type="text" id="tgt_bits_field" placeholder="e.g., 3,4">
+      
+      <button class="popupSetButton" id="gateSetButton">✅ Set Configuration</button>
+    </div>
+  </div>
+
+  <div id="qsvmPanel" class="tabcontent" style="display:none;">
+    <h3 style="color:#667eea; margin-top:0;">🧠 Quantum Support Vector Machine</h3>
+
+    <div class="qsvm-plot-container">
+      <h4 style="color:#667eea; margin-top:0; margin-bottom:15px;">Kernel Matrix (Amplitude) Heatmap</h4>
+      <div id="kernelHeatmap" style="width:100%; height:500px;"></div>
+    </div>
+
+    <div class="qsvm-plot-container">
+      <h4 style="color:#667eea; margin-top:0; margin-bottom:15px;">Kernel Surface (Amplitude)</h4>
+      <div id="kernelSurface3D" style="width:100%; height:600px;"></div>
+    </div>
+
+    <div id="qsvmOutput" style="display:none;">
+      <h4 style="color:#667eea;">Classification Results</h4>
+      <div id="qsvmMetrics" style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:20px;"></div>
+    </div>
+  </div>
+
+  <div id="qpcaPanel" class="tabcontent" style="display:none;">
+    <h3 style="color:#008080; margin-top:0;">📊 Quantum Principal Component Analysis</h3>
+    <div id="qpcaOutput" style="display:none;"></div>
+  </div>
+
+  <div id="qutipCode" class="tabcontent monospace" style="display:none;">
+# No code generated yet. Run a simulation, QSVM, or QPCA to see code here.
+  </div>
+
+  <div id="results" class="tabcontent" style="display:none;">
+    <div id="plotHist" style="width:90%; height:450px; margin:auto;"></div>
+    <div id="countPlot" style="display:none;"></div>
+    <div id="sumPlot" style="display:none;"></div>
+  </div>
+
+</body>
+</html> -->
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+/* ========================================
+   CONTROLLED GATE POPUP STYLING
+   ======================================== */
+.hover_bkgr_fricc {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.7);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+}
+
+.hover_bkgr_fricc > div {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  position: relative;
+  min-width: 400px;
+  max-width: 500px;
+}
+
+.popupCloseButton {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  cursor: pointer;
+  color: #999;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  line-height: 28px;
+}
+
+.popupCloseButton:hover {
+  color: #333;
+}
+
+.popupSetButton {
+  background: #4CAF50;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 15px;
+  font-size: 16px;
+  border: none;
+  width: 100%;
+  font-weight: bold;
+}
+
+.popupSetButton:hover {
+  background: #45a049;
+}
+
+#gatePopup label {
+  display: block;
+  margin-top: 15px;
+  font-weight: bold;
+  color: #333;
+  font-size: 14px;
+}
+
+#gatePopup input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 8px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+#gatePopup input[type="text"]:focus {
+  border-color: #4CAF50;
+  outline: none;
+}
+
+#gatePopup h3 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 22px;
+  text-align: center;
+}
+
+.popup-help-text {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+  font-weight: normal;
+}
+</style>
+  <meta charset="UTF-8">
+  <title>BarcQ Unified Quantum Simulator</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/tabstyle.css">
+  <link rel="stylesheet" href="/css/grid.css">
+  <link rel="stylesheet" href="/css/popup.css">
+
+  <!-- JS Dependencies -->
+  <script src="/jsonschemas/allowedUserDefinedGate.json"></script>
+  <script src="/jsonschemas/gatesUIExtended.json"></script>
+  <script src="/js/jquery.js"></script>
+  <script src="/js/jquery-ui.js"></script>
+  <script src="/js/createdropzone.js"></script>
+  <script src="/js/globalvars.js"></script>
+  <script src="/js/toolbox_v2.js"></script>
+  <script src="/js/selectanddelete.js"></script>
+  <script src="/js/cloneanddrag_v2.js"></script>
+  <script src="/js/mergeandunmerge.js"></script>
+  <script src="/js/gridtojson.js"></script>
+  <script src="/js/core.js"></script>
+  <script src="/js/loadjson.js"></script>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script src="/js/gridinputlines.js"></script>
+  <script src="/js/redesigngrid.js"></script>
+  <script src="/js/gatessymbol.js"></script>
+  <script src="/js/userdefinedcontrolgates.js"></script>
+  <script src="/js/checkdiv.js"></script>
+  <script src="/js/tabbedInterface.js"></script>
+  <script src="/js/plotly-latest.min.js"></script>
+  
+  <!-- Algorithm-specific frontends -->
+  <script src="/js/qsvm_frontend.js?v=20251219"></script>
+  <script src="/js/qpca_frontend.js?v=20251229"></script>
+
+  <script>
+  // ========================================
+// COMPLETE FIX FOR CIRCUIT SIMULATION
+// Add this to gridSkeleton.html <script> section
+// ========================================
+
+$(document).ready(function() {
+  console.log("⚡ Initializing BarcQ Unified Interface...");
+
+  // Grid setup
+  CreateToolBox();
+  CreateDropzone();
+  AttachDraggableEvents();
+  AttachDroppableEvents();
+  
+  if (typeof CoreTest === 'function') {
+    console.log("************* Executing Core Test *************");
+    CoreTest();
+    console.log("***********************************************");
+  }
+  
+  AddInputLinesToGrid();
+  InsertConnectorOnGrid();
+  ControlGateInitialization();
+
+  // ========================================
+  // CONTROLLED GATE POPUP (Working)
+  // ========================================
+  $("#create").off("click").on("click", function() {
+    console.log("🎛️ New Controlled Gate clicked");
+    $("#ctl_bits_field").val("");
+    $("#tgt_bits_field").val("");
+    $("#gatePopup").css("display", "flex").show();
+  });
+
+  $(".popupCloseButton").off("click").on("click", function() {
+    console.log("❌ Closing popup");
+    $("#gatePopup").hide();
+  });
+
+  $("#gateSetButton").off("click").on("click", function() {
+    console.log("✅ Gate Set button clicked");
+    
+    const ctlBitsStr = $("#ctl_bits_field").val().trim();
+    const tgtBitsStr = $("#tgt_bits_field").val().trim();
+    
+    if (!ctlBitsStr && !tgtBitsStr) {
+      alert("⚠️ Please enter at least control bits or target bits!");
+      return;
+    }
+    
+    const ctl_bits_array = ctlBitsStr ? 
+      ctlBitsStr.split(/[,\s]+/).map(s => s.trim()).filter(s => s && !isNaN(s)).map(s => parseInt(s)) : [];
+    const tgt_bits_array = tgtBitsStr ? 
+      tgtBitsStr.split(/[,\s]+/).map(s => s.trim()).filter(s => s && !isNaN(s)).map(s => parseInt(s)) : [];
+    
+    if (ctl_bits_array.length === 0 && tgt_bits_array.length === 0) {
+      alert("⚠️ Please enter valid qubit numbers (e.g., 0,1,2)");
+      return;
+    }
+    
+    const ctlSet = new Set(ctl_bits_array);
+    const tgtSet = new Set(tgt_bits_array);
+    const intersection = [...ctlSet].filter(x => tgtSet.has(x));
+    
+    if (intersection.length > 0) {
+      alert("❌ Error: Control and target bits cannot overlap!\nOverlapping bits: " + intersection.join(", "));
+      return;
+    }
+    
+    window.unitaryControlRowIds = ctl_bits_array;
+    window.unitaryTargetRowIds = tgt_bits_array;
+    
+    $("#gatePopup").hide();
+    
+    if (typeof UpdateGenericControlGate === 'function') {
+      try {
+        UpdateGenericControlGate();
+      } catch (e) {
+        console.warn("⚠️ UpdateGenericControlGate error:", e);
+      }
+    }
+    
+    alert(`✅ Controlled gate configured!\n\nControl: ${ctl_bits_array.join(", ") || "None"}\nTarget: ${tgt_bits_array.join(", ") || "None"}\n\nDrag a gate from the toolbox to apply.`);
+    
+    $("#ctl_bits_field").val("");
+    $("#tgt_bits_field").val("");
+  });
+
+  // ========================================
+  // CIRCUIT SIMULATION - FIXED VERSION
+  // ========================================
+  $("#submitButton").off("click").on("click", function(e){
+    e.preventDefault();
+    console.log("🔄 Running circuit simulation...");
+    
+    // Generate JSON from grid
+    if (typeof GridToJson === 'function') {
+      GridToJson();
+    } else {
+      console.error("❌ GridToJson function not found!");
+      alert("❌ Circuit generation function not available. Please refresh the page.");
+      return;
+    }
+    
+    // Check if circuitJsonObj exists and has instructions
+    if (typeof circuitJsonObj === 'undefined') {
+      console.error("❌ circuitJsonObj is undefined!");
+      alert("❌ Circuit data not generated. Please try adding gates to the grid first.");
+      return;
+    }
+    
+    if (!circuitJsonObj.instructions || circuitJsonObj.instructions.length === 0) {
+      alert("⚠️ Please add gates to the circuit before running simulation.\n\nSteps:\n1. Drag gates from the left toolbox\n2. Drop them on the grid\n3. Click 'Run Simulation'");
+      console.warn("⚠️ Empty circuit - no gates placed");
+      return;
+    }
+    
+    console.log("📦 Circuit has " + circuitJsonObj.instructions.length + " gates");
+    console.log("📦 Sending circuit:", JSON.stringify(circuitJsonObj, null, 2));
+
+    // Show loading state IMMEDIATELY
+    $(".tabcontent").hide();
+    $("#results").show();
+    $(".tablinks").removeClass("active");
+    $('button[onclick*="results"]').addClass("active");
+    
+    $("#plotHist").html(`
+      <div style="text-align:center; padding:60px;">
+        <div style="width:60px; height:60px; border:6px solid #f3f3f3; 
+                    border-top:6px solid #667eea; border-radius:50%; 
+                    margin:0 auto 20px; animation:spin 1s linear infinite;"></div>
+        <h3 style="color:#667eea;">⚙️ Simulating Quantum Circuit...</h3>
+        <p style="color:#666;">Computing quantum state evolution</p>
+        <style>
+          @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+          }
+        </style>
+      </div>
+    `);
+
+    // Send to backend
+    $.ajax({
+      type: "POST",
+      url: "/CodeGenerator",
+      data: JSON.stringify(circuitJsonObj),
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      timeout: 30000, // 30 second timeout
+      
+      success: function(data) {
+        console.log("✅ Backend response received");
+        console.log("Response type:", typeof data);
+        console.log("Response:", data);
+        
+        let res;
+        try {
+          res = typeof data === "string" ? JSON.parse(data) : data;
+        } catch (parseError) {
+          console.error("❌ Failed to parse response:", parseError);
+          $("#plotHist").html(`
+            <div style="padding:40px; text-align:center;">
+              <h3 style="color:#f44336;">❌ Response Parse Error</h3>
+              <p>Could not parse server response</p>
+              <pre style="text-align:left; background:#f5f5f5; padding:15px; 
+                          border-radius:8px; overflow:auto; max-height:300px;">
+${data}
+              </pre>
+            </div>
+          `);
+          return;
+        }
+        
+        // Check for errors
+        if (res.error) {
+          console.error("❌ Simulation error:", res.error);
+          $("#plotHist").html(`
+            <div style="padding:40px; text-align:center;">
+              <h3 style="color:#f44336;">❌ Simulation Error</h3>
+              <p style="color:#666; font-size:16px;">${res.error}</p>
+              <p style="color:#999; font-size:14px; margin-top:20px;">
+                This usually means there's an issue with the circuit configuration.
+                Try clearing the grid and building a simpler circuit first.
+              </p>
+            </div>
+          `);
+          return;
+        }
+
+        // Validate response has required data
+        if (!res.xdata || !res.ydata) {
+          console.error("❌ Response missing xdata or ydata:", res);
+          $("#plotHist").html(`
+            <div style="padding:40px; text-align:center;">
+              <h3 style="color:#f44336;">❌ Invalid Response</h3>
+              <p>Server response is missing required data</p>
+              <pre style="text-align:left; background:#f5f5f5; padding:15px; 
+                          border-radius:8px; overflow:auto; max-height:300px;">
+${JSON.stringify(res, null, 2)}
+              </pre>
+            </div>
+          `);
+          return;
+        }
+
+        console.log("✅ Valid response with xdata:", res.xdata.length, "points");
+        console.log("✅ Valid response with ydata:", res.ydata.length, "values");
+
+        // Hide algorithm outputs
+        $("#qsvmOutput").hide();
+        $("#qpcaOutput").hide();
+
+        // Clear and plot results
+        $("#plotHist").empty();
+        
+        try {
+          // Ensure xdata is array of strings
+          let xStringData = res.xdata.map(x => String(x));
+          
+          console.log("📊 Plotting histogram with Plotly...");
+          console.log("X data:", xStringData);
+          console.log("Y data:", res.ydata);
+          
+          Plotly.newPlot("plotHist", [{
+            x: xStringData,
+            y: res.ydata,
+            type: "bar",
+            marker: { 
+              color: '#3498db',
+              line: {
+                color: '#2980b9',
+                width: 1.5
+              }
+            }
+          }], {
+            title: {
+              text: "Quantum Circuit Output Probabilities",
+              font: { size: 20, color: '#333' }
+            },
+            xaxis: { 
+              title: "Quantum State |ψ⟩",
+              tickangle: -45,
+              tickfont: { size: 12 }
+            },
+            yaxis: { 
+              title: "Probability", 
+              range: [0, Math.max(...res.ydata) * 1.1],
+              tickformat: '.3f'
+            },
+            plot_bgcolor: '#f9f9f9',
+            paper_bgcolor: 'white',
+            margin: { t: 60, b: 100, l: 60, r: 30 }
+          }, {
+            responsive: true,
+            displayModeBar: true
+          });
+          
+          console.log("✅ Plot rendered successfully!");
+          
+          // Add success message
+          const totalProb = res.ydata.reduce((a, b) => a + b, 0);
+          const maxProb = Math.max(...res.ydata);
+          const maxState = xStringData[res.ydata.indexOf(maxProb)];
+          
+          const infoDiv = $(`
+            <div style="margin-top:20px; padding:20px; background:#e8f5e9; 
+                        border-radius:8px; border:2px solid #4caf50;">
+              <h4 style="color:#2e7d32; margin-top:0;">✅ Simulation Complete</h4>
+              <p style="color:#1b5e20; margin:5px 0;">
+                <strong>Total Probability:</strong> ${totalProb.toFixed(6)}
+                ${Math.abs(totalProb - 1.0) > 0.01 ? " ⚠️ (Should be ~1.0)" : " ✓"}
+              </p>
+              <p style="color:#1b5e20; margin:5px 0;">
+                <strong>Most Likely State:</strong> ${maxState} 
+                (${(maxProb * 100).toFixed(2)}% probability)
+              </p>
+              <p style="color:#1b5e20; margin:5px 0;">
+                <strong>Basis States:</strong> ${res.xdata.length}
+              </p>
+            </div>
+          `);
+          $("#plotHist").append(infoDiv);
+          
+        } catch (plotError) {
+          console.error("❌ Plotting error:", plotError);
+          $("#plotHist").html(`
+            <div style="padding:40px; text-align:center;">
+              <h3 style="color:#f44336;">❌ Plotting Error</h3>
+              <p>${plotError.message}</p>
+              <p style="margin-top:20px;">
+                <strong>X Data:</strong> ${JSON.stringify(res.xdata)}<br>
+                <strong>Y Data:</strong> ${JSON.stringify(res.ydata)}
+              </p>
+            </div>
+          `);
+        }
+
+        // Update QuTiP code tab
+        if (res.qutip) {
+          $("#qutipCode").text(res.qutip);
+          console.log("✅ QuTiP code updated");
+        }
+      },
+      
+      error: function(xhr, status, err) {
+        console.error("❌ AJAX Error:");
+        console.error("  Status:", status);
+        console.error("  Error:", err);
+        console.error("  Response:", xhr.responseText);
+        
+        $("#plotHist").html(`
+          <div style="padding:40px; text-align:center;">
+            <h3 style="color:#f44336;">❌ Connection Error</h3>
+            <p style="color:#666; font-size:16px;">Failed to communicate with backend server</p>
+            
+            <div style="text-align:left; margin:20px auto; max-width:600px; 
+                        background:#f5f5f5; padding:20px; border-radius:8px;">
+              <p><strong>Status:</strong> ${status}</p>
+              <p><strong>Error:</strong> ${err || "Unknown error"}</p>
+              <p><strong>Response:</strong></p>
+              <pre style="max-height:200px; overflow:auto; background:white; 
+                          padding:10px; border-radius:4px;">
+${xhr.responseText || "No response from server"}
+              </pre>
+            </div>
+            
+            <p style="color:#999; margin-top:20px;">
+              Make sure the backend server is running:<br>
+              <code style="background:#333; color:#0f0; padding:5px 10px; 
+                           border-radius:4px; display:inline-block; margin-top:10px;">
+                python pythonBackend.py
+              </code>
+            </p>
+            
+            <button onclick="location.reload()" 
+                    style="margin-top:20px; padding:12px 24px; background:#667eea; 
+                           color:white; border:none; border-radius:6px; cursor:pointer; 
+                           font-size:14px; font-weight:600;">
+              🔄 Reload Page
+            </button>
+          </div>
+        `);
+      }
+    });
+  });
+
+  // ========================================
+  // OTHER BUTTONS
+  // ========================================
+  $("#mergebutton").click(function(){
+    console.log("📤 Export JSON clicked");
+    if (typeof GridToJson === 'function') {
+      GridToJson();
+      console.log("✅ Circuit JSON:", circuitJsonObj);
+      
+      const dataStr = JSON.stringify(circuitJsonObj, null, 2);
+      const dataBlob = new Blob([dataStr], {type: 'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'quantum_circuit_' + new Date().getTime() + '.json';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      alert("✅ Circuit exported successfully!");
+    }
+  });
+  
+  $("#loadbutton").click(function(){
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        try {
+          const jsonData = JSON.parse(event.target.result);
+          console.log("📋 Loaded JSON:", jsonData);
+          
+          if (typeof LoadJson === 'function') {
+            LoadJson(jsonData);
+            alert(`✅ Circuit loaded with ${jsonData.instructions?.length || 0} gates`);
+          } else {
+            alert("⚠️ Load function not available");
+          }
+        } catch (error) {
+          console.error("❌ Error loading circuit:", error);
+          alert("❌ Error loading circuit: " + error.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+    
+    input.click();
+  });
+  
+  $("#clearButton").click(() => {
+    if (confirm("Are you sure you want to clear the circuit?")) {
+      $("#dropzoneDiv").empty();
+      if (typeof CreateDropzone === "function") CreateDropzone();
+      if (typeof AddInputLinesToGrid === "function") AddInputLinesToGrid();
+      if (typeof InsertConnectorOnGrid === "function") InsertConnectorOnGrid();
+      console.log("🧹 Grid cleared");
+      alert("✅ Circuit cleared");
+    }
+  });
+  
+  $("#addQubitButton").click(() => {
+    if (typeof AddQubitRow === "function") {
+      AddQubitRow();
+      console.log("✅ Qubit added");
+    }
+  });
+  
+  $("#removeQubitButton").click(() => {
+    if (typeof RemoveQubitRow === "function") {
+      RemoveQubitRow();
+      console.log("✅ Qubit removed");
+    }
+  });
+
+  // ========================================
+  // QPCA MANUAL INPUT BUTTON HANDLER - ADDED
+  // ========================================
+  $("#runManualQPCA").off('click').on('click', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🔬 Manual QPCA clicked');
+    
+    if (typeof window.QPCA !== 'undefined' && typeof window.QPCA.runAnalysis === 'function') {
+      window.QPCA.runAnalysis();
+    } else {
+      console.error('❌ QPCA module not loaded');
+      alert('❌ QPCA module not initialized. Please refresh the page.');
+    }
+  });
+
+  console.log("✅ All event handlers initialized");
+});
+  </script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+
+    h2 {
+      color: white;
+      text-align: center;
+      font-size: 32px;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .tab {
+      background: white;
+      border-radius: 10px 10px 0 0;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .tablinks {
+      background: #f1f3f4;
+      border: none;
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #5f6368;
+    }
+
+    .tablinks:hover {
+      background: #e8eaed;
+      color: #202124;
+    }
+
+    .tablinks.active {
+      background: white;
+      color: #667eea;
+      border-bottom: 3px solid #667eea;
+    }
+
+    .tabcontent {
+      background: white;
+      padding: 30px;
+      border-radius: 0 0 10px 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      min-height: 500px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 5px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .monospace {
+      font-family: 'Courier New', monospace;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    #plotHist {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .qsvm-plot-container {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      overflow: visible !important;
+    }
+
+    .qsvm-plot-container > div {
+      width: 100% !important;
+      min-height: 500px;
+      overflow: visible !important;
+    }
+
+    .plotly {
+      overflow: visible !important;
+    }
+
+    .js-plotly-plot {
+      overflow: visible !important;
+    }
+
+    .plotly .gl-container {
+      overflow: visible !important;
+    }
+    
+    .qpca-plot-container {
+      width: 100%;
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+  </style>
+</head>
+
+<body>
+  <h2>🌌 BarcQ Unified Quantum Simulator</h2>
+
+  <!-- Tab Bar -->
+  <div class="tab">
+    <button class="tablinks active" onclick="openCity(event, 'circuitComposer')">Circuit Editor</button>
+    <button class="tablinks" onclick="openCity(event, 'qsvmPanel')">QSVM</button>
+    <button class="tablinks" onclick="openCity(event, 'qpcaPanel')">QPCA</button>
+    <button class="tablinks" onclick="openCity(event, 'qutipCode')">QuTiP Code</button>
+    <button class="tablinks" onclick="openCity(event, 'results')">Results</button>
+  </div> 
+
+  <!-- CIRCUIT EDITOR TAB -->
+  <div id="circuitComposer" class="tabcontent" style="display:block;">
+    <table>
+      <tr>
+        <td><div id="toolboxDivSingle" class="toolbox"></div></td>
+        <td><div id="toolboxDivMultiple" class="toolbox"></div></td>
+        <td style="vertical-align: top;">
+          <div id="parentForOverlappingDiv">
+            <div id="linesDiv" class="box"></div>
+            <div id="svgDropDiv" class="box stack-top">
+              <svg xmlns="http://www.w3.org/2000/svg" id="testSvg" width="100%" height="100%">
+                <g id="testGroup">
+                  <foreignObject x="0" y="0" width="100%" height="100%">
+                    <div id="dropzoneDiv" width="100%" height="100%"></div>
+                  </foreignObject>
+                </g>
+              </svg>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <div style="margin-top:20px; text-align:center;">
+      <button id="submitButton">▶️ Run Simulation</button>
+      <button id="mergebutton">📤 Export JSON</button>
+      <button id="loadbutton">📥 Load Circuit</button>
+      <button id="create">➕ New Controlled Gate</button>
+      <button id="clearButton">🗑️ Clear Grid</button>
+      <button id="addQubitButton">⬇️ Add Qubit</button>
+      <button id="removeQubitButton">⬆️ Remove Qubit</button>
+    </div>
+  </div>
+
+  <!-- CONTROLLED GATE POPUP -->
+  <div class="hover_bkgr_fricc" id="gatePopup">
+    <div>
+      <span class="popupCloseButton">&times;</span>
+      <h3>⚙️ Configure Controlled Gate</h3>
+      
+      <label for="ctl_bits_field">
+        Control Qubits:
+        <span class="popup-help-text">(comma or space separated, e.g., "0,1" or "0 1")</span>
+      </label>
+      <input type="text" id="ctl_bits_field" placeholder="e.g., 0,1,2">
+      
+      <label for="tgt_bits_field">
+        Target Qubits:
+        <span class="popup-help-text">(comma or space separated, e.g., "3,4" or "3 4")</span>
+      </label>
+      <input type="text" id="tgt_bits_field" placeholder="e.g., 3,4">
+      
+      <button class="popupSetButton" id="gateSetButton">✅ Set Configuration</button>
+    </div>
+  </div>
+
+  <!-- QSVM TAB -->
+  <div id="qsvmPanel" class="tabcontent" style="display:none;">
+    <h3 style="color:#667eea; margin-top:0;">🧠 Quantum Support Vector Machine</h3>
+
+    <div class="qsvm-plot-container">
+      <h4 style="color:#667eea; margin-top:0; margin-bottom:15px;">Kernel Matrix (Amplitude) Heatmap</h4>
+      <div id="kernelHeatmap" style="width:100%; height:500px;"></div>
+    </div>
+
+    <div class="qsvm-plot-container">
+      <h4 style="color:#667eea; margin-top:0; margin-bottom:15px;">Kernel Surface (Amplitude)</h4>
+      <div id="kernelSurface3D" style="width:100%; height:600px;"></div>
+    </div>
+
+    <div id="qsvmOutput" style="display:none;">
+      <h4 style="color:#667eea;">Classification Results</h4>
+      <div id="qsvmMetrics" style="background:#f8f9fa; padding:15px; border-radius:8px; margin-bottom:20px;"></div>
+    </div>
+  </div>
+
+  <!-- ========================================
+       QPCA TAB - COMPLETE FIXED VERSION
+       ======================================== -->
+  <div id="qpcaPanel" class="tabcontent" style="display:none;">
+    <h3 style="color:#008080; margin-top:0;">📊 Quantum Principal Component Analysis</h3>
+    
+    <!-- Parameter Controls (will be inserted here by createParameterPanel) -->
+    
+    <!-- Mode Selection -->
+    <div style="background:linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%); padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+      <h4 style="color:#00695c; margin:0 0 15px 0; font-size:18px;">🎯 Analysis Mode</h4>
+      <div style="display:flex; gap:20px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 20px; background:white; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+          <input type="radio" name="qpcaMode" value="dataset" checked style="cursor:pointer;">
+          <span style="font-weight:500; color:#00695c;">📚 Dataset Mode</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 20px; background:white; border-radius:8px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">
+          <input type="radio" name="qpcaMode" value="manual" style="cursor:pointer;">
+          <span style="font-weight:500; color:#00695c;">✍️ Manual Input</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Dataset Section -->
+    <div id="datasetSection" style="background:linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+      <h4 style="color:#ef6c00; margin:0 0 15px 0; font-size:18px;">📊 Select Dataset</h4>
+      
+      <select id="qpcaDataset" style="width:100%; padding:12px; border-radius:8px; border:2px solid #ff9800; font-size:14px; font-weight:500; cursor:pointer; background:white;">
+        <option value="iris">🌸 Iris Dataset (4 features, 3 classes, 150 samples)</option>
+        <option value="wine">🍷 Wine Dataset (13 features, 3 classes, 178 samples)</option>
+        <option value="breast_cancer">🔬 Breast Cancer (30 features, 2 classes, 569 samples)</option>
+        <option value="csv">📁 Upload Custom CSV File</option>
+      </select>
+      
+      <!-- CSV Upload Section -->
+      <div id="csvUploadSection" style="display:none; margin-top:20px; background:white; padding:15px; border-radius:8px;">
+        <label for="qpcaCsvFile" style="display:block; margin-bottom:10px; font-weight:600; color:#ef6c00;">
+          📁 Upload CSV File:
+        </label>
+        <input type="file" id="qpcaCsvFile" accept=".csv" style="margin-bottom:10px; padding:8px;">
+        <div style="background:#fff9e6; border-left:4px solid #ff9800; padding:12px; margin-top:10px; border-radius:4px;">
+          <p style="font-size:13px; color:#7d6608; margin:0;">
+            <strong>📋 Requirements:</strong>
+          </p>
+          <ul style="font-size:12px; color:#7d6608; margin:5px 0 0 20px; padding:0;">
+            <li>CSV must contain a label column named: <code>label</code>, <code>class</code>, <code>target</code>, <code>result</code>, or <code>outcome</code></li>
+            <li>All other columns will be used as features</li>
+            <li>Numeric data only (non-numeric values will cause errors)</li>
+          </ul>
+        </div>
+        <button id="runCsvQPCA" style="display:none; margin-top:15px;">🚀 Run CSV QPCA</button>
+      </div>
+      
+      <button id="runQPCA" style="margin-top:20px; width:100%;">🚀 Run QPCA Analysis</button>
+    </div>
+
+    <!-- Manual Input Section -->
+    <div id="manualSection" style="display:none; background:linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%); padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+      <h4 style="color:#6a1b9a; margin:0 0 15px 0; font-size:18px;">✍️ Manual Data Input</h4>
+      
+      <textarea id="qpcaData" rows="10" placeholder="Enter your data matrix (one row per line, values separated by commas or spaces):
+
+Example:
+0.5, 1.2, 0.8, 0.3
+0.3, 1.5, 0.9, 0.7
+1.2, 0.8, 1.1, 0.4
+0.9, 1.0, 0.7, 0.8
+1.1, 0.9, 1.3, 0.5
+
+Each row is a sample, each column is a feature." style="width:100%; padding:15px; border-radius:8px; border:2px solid #9c27b0; font-family:'Courier New', monospace; font-size:13px; background:white; resize:vertical;"></textarea>
+      
+      <div style="background:#fff9e6; border-left:4px solid #9c27b0; padding:12px; margin-top:10px; border-radius:4px;">
+        <p style="font-size:13px; color:#6a1b9a; margin:0;">
+          <strong>💡 Format Guidelines:</strong>
+        </p>
+        <ul style="font-size:12px; color:#6a1b9a; margin:5px 0 0 20px; padding:0;">
+          <li>Separate values with commas or spaces</li>
+          <li>Each row must have the same number of values</li>
+          <li>Minimum 2 samples required</li>
+          <li>Numeric values only</li>
+        </ul>
+      </div>
+      
+      <button id="runManualQPCA" style="margin-top:15px; width:100%;">🚀 Analyze Manual Data</button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="qpcaOutput" style="display:none;">
+      <div style="text-align:center; margin:20px 0; padding:15px; background:linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%); border-radius:12px;">
+        <h3 style="color:#2e7d32; margin:0; font-size:24px;">✅ Analysis Complete</h3>
+      </div>
+      
+      <!-- Metrics Display -->
+      <div id="qpcaMetrics" style="margin-bottom:30px;"></div>
+      
+      <!-- Visualizations -->
+      <div style="background:#f5f5f5; padding:20px; border-radius:12px; margin-bottom:20px;">
+        <h3 style="color:#1565c0; margin:0 0 20px 0; text-align:center; font-size:22px;">📊 Visualizations</h3>
+        
+        <!-- Eigenvalue Spectrum -->
+        <div class="qpca-plot-container" style="margin-bottom:30px;">
+          <h4 style="color:#00695c; margin:0 0 10px 0; font-size:18px;">🔢 Eigenvalue Spectrum</h4>
+          <p style="color:#666; font-size:13px; margin:0 0 15px 0;">
+            Shows the magnitude of each principal component's contribution to variance
+          </p>
+          <div id="qpcaEigenPlot" style="width:100%; height:400px; background:white; border-radius:8px;"></div>
+        </div>
+        
+        <!-- Explained Variance -->
+        <div class="qpca-plot-container" style="margin-bottom:30px;">
+          <h4 style="color:#1976d2; margin:0 0 10px 0; font-size:18px;">📈 Explained Variance</h4>
+          <p style="color:#666; font-size:13px; margin:0 0 15px 0;">
+            Individual and cumulative variance explained by each component
+          </p>
+          <div id="qpcaScreePlot" style="width:100%; height:400px; background:white; border-radius:8px;"></div>
+        </div>
+        
+        <!-- Density Matrix -->
+        <div class="qpca-plot-container" style="margin-bottom:30px;">
+          <h4 style="color:#6a1b9a; margin:0 0 10px 0; font-size:18px;">🎨 Density Matrix Heatmap</h4>
+          <p style="color:#666; font-size:13px; margin:0 0 15px 0;">
+            Quantum density matrix showing feature correlations (magnitude)
+          </p>
+          <div id="qpcaDensityPlot" style="width:100%; height:500px; background:white; border-radius:8px;"></div>
+        </div>
+        
+        <!-- Classification Accuracy -->
+        <div class="qpca-plot-container">
+          <h4 style="color:#d32f2f; margin:0 0 10px 0; font-size:18px;">🎯 Classification Accuracy Comparison</h4>
+          <p style="color:#666; font-size:13px; margin:0 0 15px 0;">
+            QPCA vs Classical PCA performance using KNN classifier
+          </p>
+          <div id="qpcaAccuracyPlot" style="width:100%; height:400px; background:white; border-radius:8px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUTIP CODE TAB -->
+  <div id="qutipCode" class="tabcontent monospace" style="display:none;">
+# No code generated yet. Run a simulation, QSVM, or QPCA to see code here.
+  </div>
+
+  <!-- RESULTS TAB -->
+  <div id="results" class="tabcontent" style="display:none;">
+    <div id="plotHist" style="width:90%; height:450px; margin:auto;"></div>
+    <div id="countPlot" style="display:none;"></div>
+    <div id="sumPlot" style="display:none;"></div>
+  </div>
+
+</body>
+</html>

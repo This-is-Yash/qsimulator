@@ -1,0 +1,148 @@
+/* ==========================================================
+   BarcQ Grid CSS - Complete Fixed Version
+   ========================================================== */
+
+table {
+    /* position: fixed; */
+}
+
+#clonedElement {
+    position: fixed;
+    left: 150px;
+    top: 5px;
+}
+
+.dropzone {
+    width: 36px;
+    height: 36px;
+    /* border: solid blue; */
+    background-color: transparent;
+    /* position: fixed; */
+}
+
+.nondropzone {
+    width: 36px;
+    height: 36px;
+    border: solid blue;
+    /* position: fixed; */
+}
+
+.iamdroppable {
+    /* Empty class for dropzone identification */
+}
+
+#toolboxDivSingle {
+    width: 50px;
+    height: 1000px;
+    border: solid black 1px;
+    /* position: fixed; */
+}
+
+#toolboxDivMultiple {
+    width: 50px;
+    height: 1000px;
+    left: 60px;
+    border: solid black 1px;
+    /* position: fixed; */
+}
+
+.toolboxcc {
+    width: 50px;
+    height: 1000px;
+    border: solid black 1px;
+    position: fixed;
+}
+
+#dropzoneDiv {
+    position: relative;
+    min-height: 600px;
+}
+
+.overlap {
+    border: solid black 1px;
+    position: relative;
+}
+
+#parentForOverlappingDiv {
+    left: 50px;
+    right: 50px;
+    width: 1000px;
+    height: 1000px;
+    position: relative;
+}
+
+/* ✅ CRITICAL FIX: Box styling that doesn't interfere with child elements */
+.box {
+    width: 100%;
+    height: 100%;            
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 1;
+    border: solid black 2px;
+    pointer-events: none; /* Allow clicks to pass through to children */
+}
+
+.stack-top {
+    width: 100%;
+    height: 100%;
+    z-index: 9;
+    margin: 0px;
+    border: solid red 1px;
+    pointer-events: auto; /* Re-enable pointer events */
+}
+
+/* ✅ CRITICAL: Ensure grid children (gates) are always visible */
+#grid {
+    position: relative !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    min-height: 600px !important;
+    z-index: 1 !important;
+}
+
+#grid > * {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: absolute !important;
+    pointer-events: auto !important;
+}
+
+/* ✅ Ensure SVG elements inside gates are visible */
+#grid svg {
+    display: block !important;
+    overflow: visible !important;
+    pointer-events: none !important;
+}
+
+/* ✅ Ensure images inside SVG are visible */
+#grid svg image {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* ✅ Make sure dragged gates are visible during drag */
+.ui-draggable-dragging {
+    opacity: 0.8 !important;
+    z-index: 10000 !important;
+    visibility: visible !important;
+}
+
+/* ✅ Ensure helper clone is visible */
+.ui-draggable-helper {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* ✅ Debug styling (remove after testing) */
+#grid > [id*="_clone_"] {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 3px solid #FF1744 !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4) !important;
+}
+
+    	
+
+		
